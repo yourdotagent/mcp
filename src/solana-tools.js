@@ -2,12 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as anchor from '@coral-xyz/anchor';
+import BN from 'bn.js';
 import {
   Connection,
   Ed25519Program,
   Keypair,
   PublicKey,
   SystemProgram,
+  SYSVAR_INSTRUCTIONS_PUBKEY,
   Transaction,
   sendAndConfirmTransaction,
   LAMPORTS_PER_SOL,
@@ -204,7 +206,7 @@ export async function recordNfpProof({ relayerWalletId, name, nonce, message, si
   const [proofRecord] = PublicKey.findProgramAddressSync([
     Buffer.from('proof'),
     domainRecord.toBuffer(),
-    new anchor.BN(String(nonce)).toArrayLike(Buffer, 'le', 8),
+    new BN(String(nonce)).toArrayLike(Buffer, 'le', 8),
   ], resolvedProgramId);
 
   const ed25519Ix = Ed25519Program.createInstructionWithPublicKey({
@@ -213,7 +215,7 @@ export async function recordNfpProof({ relayerWalletId, name, nonce, message, si
     signature,
   });
   const ix = await program.methods
-    .recordNfpSignature(normalized, new anchor.BN(String(nonce)), message, Array.from(signature))
+    .recordNfpSignature(normalized, new BN(String(nonce)), message, Array.from(signature))
     .accounts({
       payer: relayer.publicKey,
       domainRecord,
