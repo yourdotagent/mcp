@@ -111,7 +111,7 @@ server.tool(
   'dotagent_pump_op',
   'Run a bundled Pump op script. Defaults are dry-run/simulation. Passing --send is fund-moving and requires exact human approval plus approvedSend=true.',
   {
-    op: z.enum(['buy', 'buy_bonding_curve', 'buy_migrated', 'add_liquidity', 'claim_fees', 'claim_pump_v2_fees', 'claim_amm_fees', 'claim_redirect_fees', 'deploy_pump_token', 'airdrop', 'burn_tokens']),
+    op: z.enum(['buy', 'buy_bonding_curve', 'buy_migrated', 'add_liquidity', 'claim_fees', 'deploy_pump_token', 'airdrop', 'burn_tokens']),
     args: z.array(z.string()).optional().describe('CLI args for the script, e.g. ["--mint", "...", "--amount-sol", "0.01"]. Include --send only after exact approval.'),
     env: z.record(z.string()).optional().describe('Runtime env such as RPC_URL, PRIVATE_KEY, PROJECT_TOKEN_MINT. Do not expose secrets in chat.'),
     approvedSend: z.boolean().optional().describe('Must be true when args includes --send, after exact human approval.'),

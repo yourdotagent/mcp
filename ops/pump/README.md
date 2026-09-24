@@ -10,10 +10,7 @@ Load env from `ops/pump/.env`, the MCP repo `.env`, or explicit MCP tool env. No
 - `buy-migrated.cjs` — migrated-token Jupiter/Pump AMM buy path.
 - `buy.cjs` — auto-detects bonding curve completion and dispatches to bonding/migrated buy.
 - `add-liquidity.cjs` — Pump AMM add liquidity.
-- `claim-fees.cjs` — auto claim Pump v2, AMM, and redirect/share fees.
-- `claim-pump-v2-fees.cjs` — claim only Pump v2 creator fees.
-- `claim-amm-fees.cjs` — claim only Pump AMM creator fees.
-- `claim-redirect-fees.cjs` — claim only redirect/sharing fees.
+- `claim-fees.cjs` — auto claim Pump v2, AMM, and redirect/share fees. Use `--mode auto|pump-v2|amm|redirect|sharing-amm`.
 - `airdrop.cjs` — random-holder airdrop helper copied out as standalone.
 - `deploy.cjs` — Pump token deploy helper copied out as standalone.
 - `burn-tokens.cjs` — burn the signer's token balance or `--amount-raw`.

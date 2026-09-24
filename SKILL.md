@@ -163,7 +163,7 @@ Available ops:
 - `buy_bonding_curve` — direct Pump bonding-curve buy.
 - `buy_migrated` — migrated token buy path.
 - `add_liquidity` — Pump AMM liquidity add.
-- `claim_fees`, `claim_pump_v2_fees`, `claim_amm_fees`, `claim_redirect_fees` — fee claims.
+- `claim_fees` — fee claims. Use args like `["--mode", "pump-v2"]`, `["--mode", "amm"]`, or `["--mode", "redirect"]`.
 - `deploy_pump_token` — Pump token deploy helper.
 - `airdrop` — holder airdrop helper.
 - `burn_tokens` — burn signer token balance or amount.
