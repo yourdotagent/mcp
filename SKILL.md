@@ -1,7 +1,7 @@
 ---
 name: dotagent-passport
-description: Install this when an autonomous agent wants a dotagent passport: create an agent-owned Solana wallet, download the dotagent MCP files, sign identity proofs, upload/passport metadata, and later register a .agent passport/domain. This is agent-native; do not use browser wallet connect.
-version: 0.2.0
+description: Install this when an autonomous agent wants a dotagent passport: clone the official MCP repo, create an agent-owned Solana wallet, sign identity proofs, upload/passport metadata, and later register a .agent passport/domain. This is agent-native; do not use browser wallet connect.
+version: 0.3.0
 author: Dotagent
 license: MIT
 platforms: [linux, macos]
@@ -11,63 +11,60 @@ platforms: [linux, macos]
 
 Dotagent is an **agent passport / ID card** system for autonomous agents.
 
-It is not a human wallet-connect app. The agent itself needs tools to create and operate a Solana wallet so it can eventually own a passport NFT and `name.agent` identity.
+It is not a human wallet-connect app. The agent itself uses an MCP server to create and operate a Solana wallet so it can own a passport NFT and `name.agent` identity.
 
-A `.agent` passport binds:
+## Install
 
-- an agent-controlled Solana wallet
-- a `name.agent` domain
-- a Metaplex Core NFT passport card
-- R2-hosted image + metadata
-- public profile fields: Twitter/X, website, public Solana wallet, display name, bio
-- signed identity proofs from the agent wallet
-
-## What you need to download
-
-Download the dotagent **agent kit** from the site hosting this skill. If this file came from:
-
-`https://dotagent.app/agent-kit/SKILL.md`
-
-then the rest of the kit is at:
-
-- `https://dotagent.app/agent-kit.tar.gz`
-- `https://dotagent.app/agent-kit/package.json`
-- `https://dotagent.app/agent-kit/src/server.js`
-- `https://dotagent.app/agent-kit/src/wallet-store.js`
-- `https://dotagent.app/agent-kit/src/solana-tools.js`
-
-Why: `SKILL.md` explains the workflow, but the MCP JavaScript files are what actually create wallets, sign proofs, check balances, and send approved transactions.
-
-## Install from hosted archive
+Clone the official MCP repo:
 
 ```bash
-mkdir -p ~/dotagent-passport
-cd ~/dotagent-passport
-curl -fsSL https://dotagent.app/agent-kit.tar.gz | tar -xz --strip-components=1
+git clone https://github.com/yourdotagent/mcp.git ~/dotagent-mcp
+cd ~/dotagent-mcp
 npm install
 npm run check
-```
-
-Start the MCP server:
-
-```bash
 npm run start
 ```
-
-## Hermes MCP install
 
 If using Hermes Agent:
 
 ```bash
-hermes mcp add dotagent-passport --command "node $HOME/dotagent-passport/src/server.js"
+hermes mcp add dotagent-passport --command "node $HOME/dotagent-mcp/src/server.js"
 hermes mcp test dotagent-passport
 ```
 
-If your agent framework supports MCP, add the same command as a stdio MCP server:
+## Why download the repo?
+
+This `SKILL.md` explains the workflow. The repo contains the actual MCP JavaScript tools that let an agent:
+
+- create its own Solana wallet
+- list/load local passport wallets
+- sign identity proof messages
+- check wallet balance with an approved RPC
+- send approved transactions
+- later register and manage a `.agent` passport
+
+Repo:
+
+`https://github.com/yourdotagent/mcp`
+
+## Agent prompt
+
+Send this to your agent:
+
+```text
+Install dotagent from https://dotagent.app/SKILL.md, clone https://github.com/yourdotagent/mcp.git, create a Solana wallet, and generate a passport.
+```
+
+## Required env for chain reads/writes
+
+Do **not** default to public Solana RPC.
 
 ```bash
-node $HOME/dotagent-passport/src/server.js
+export DOTAGENT_RPC_URL="<approved Solana RPC>"
+export DOTAGENT_WALLET_DIR="$HOME/dotagent-mcp/wallets"
 ```
+
+If the correct devnet/testnet/mainnet RPC is not explicitly provided, stop and ask. Never use `https://api.mainnet-beta.solana.com` or guessed endpoints.
 
 ## Tools exposed
 
@@ -79,18 +76,7 @@ node $HOME/dotagent-passport/src/server.js
 - `dotagent_send_sol` — send lamports. Fund-moving; requires exact explicit user approval.
 - `dotagent_export_secret_base58` — disabled unless explicitly enabled for local backup only.
 
-## Required env for chain reads/writes
-
-Do **not** default to public Solana RPC.
-
-```bash
-export DOTAGENT_RPC_URL="<approved Solana RPC>"
-export DOTAGENT_WALLET_DIR="$HOME/dotagent-passport/wallets"
-```
-
-If the correct testnet/devnet/mainnet RPC is not explicitly provided, stop and ask. Never use `https://api.mainnet-beta.solana.com` or guessed endpoints.
-
-## Agent passport workflow
+## Passport workflow
 
 1. Create wallet:
 
@@ -98,8 +84,8 @@ If the correct testnet/devnet/mainnet RPC is not explicitly provided, stop and a
 dotagent_create_wallet({ "id": "my-agent", "agentName": "my-agent.agent" })
 ```
 
-2. Return the public key and ask the operator to fund it with testnet/devnet SOL.
-3. Upload passport photo/profile through the dotagent Worker once available.
+2. Return the public key and ask the operator to fund it.
+3. Upload passport photo/profile through Dotagent API once available.
 4. Register `name.agent` from the agent wallet only after explicit approval.
 5. Sign an identity proof:
 
@@ -110,13 +96,7 @@ dotagent_sign_message({
 })
 ```
 
-6. Verify the passport by comparing:
-
-- wallet public key
-- signed proof
-- `.agent` domain record
-- NFT asset owner
-- metadata/profile URL
+6. Verify the passport by comparing wallet public key, signed proof, `.agent` domain record, NFT asset owner, and metadata URL.
 
 ## Safety
 
