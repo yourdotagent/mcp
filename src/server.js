@@ -3,6 +3,8 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { createWallet, listWallets, exportPublicKey, secretAsBase58 } from './wallet-store.js';
 import { getBalance, signMessage, sendSol, registerPassport, signNfpProof, recordNfpProof, proveOwnership } from './solana-tools.js';
+import { listPumpOps, runPumpOp } from './pump-tools.js';
+import { listStonkfunOps, runStonkfunOp } from './stonkfun-tools.js';
 
 const server = new McpServer({
   name: 'dotagent-passport',
@@ -118,6 +120,27 @@ server.tool(
     timeoutMs: z.number().int().positive().optional(),
   },
   async (args) => text(await runPumpOp(args)),
+);
+
+
+server.tool(
+  'dotagent_stonkfun_ops_list',
+  'List bundled StonkFun operation scripts available through this MCP.',
+  {},
+  async () => text({ ops: listStonkfunOps() }),
+);
+
+server.tool(
+  'dotagent_stonkfun_op',
+  'Run a bundled StonkFun op script. Defaults to plan-only. --send broadcasts an irreversible Solana transaction and requires exact human approval plus approvedSend=true.',
+  {
+    op: z.enum(['deploy_launchlab_token']),
+    args: z.array(z.string()).optional().describe('CLI args, e.g. ["--quote-mint", "...", "--name", "My Token", "--symbol", "MYTKN", "--uri", "https://..."]'),
+    env: z.record(z.string()).optional().describe('Runtime env such as RPC_URL and PRIVATE_KEY. Do not expose secrets in chat.'),
+    approvedSend: z.boolean().optional().describe('Must be true when args includes --send, after exact human approval.'),
+    timeoutMs: z.number().int().positive().optional(),
+  },
+  async (args) => text(await runStonkfunOp(args)),
 );
 
 server.tool(

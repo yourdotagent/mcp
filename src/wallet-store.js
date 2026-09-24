@@ -13,7 +13,7 @@ export function walletDir() {
 export function ensureWalletDir() {
   const dir = walletDir();
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
-  fs.chmodSync(dir, 0o700);
+  safeChmod(dir, 0o700);
   return dir;
 }
 
@@ -49,7 +49,7 @@ export function createWallet({ id, agentName, purpose = '.agent passport wallet'
     createdAt: new Date().toISOString(),
   };
   fs.writeFileSync(file, JSON.stringify(payload, null, 2), { mode: 0o600 });
-  fs.chmodSync(file, 0o600);
+  safeChmod(file, 0o600);
   return publicWallet(payload);
 }
 
@@ -66,6 +66,15 @@ export function loadWallet(id) {
   if (!fs.existsSync(file)) throw new Error(`wallet not found: ${id}`);
   const payload = JSON.parse(fs.readFileSync(file, 'utf8'));
   return Keypair.fromSecretKey(Uint8Array.from(payload.secretKey));
+}
+
+function safeChmod(target, mode) {
+  if (process.platform === 'win32') return;
+  try {
+    fs.chmodSync(target, mode);
+  } catch (error) {
+    if (error?.code !== 'ENOSYS' && error?.code !== 'EPERM') throw error;
+  }
 }
 
 export function publicWallet(payload) {

@@ -8,6 +8,7 @@ process.env.DOTAGENT_WALLET_DIR = tmp;
 
 const store = await import('../src/wallet-store.js');
 const solana = await import('../src/solana-tools.js');
+const stonkfun = await import('../src/stonkfun-tools.js');
 
 const wallet = store.createWallet({ id: 'quant', agentName: 'quant.agent' });
 assert.equal(wallet.id, 'quant');
@@ -29,5 +30,10 @@ assert.match(ownership.signatureBase58, /^[1-9A-HJ-NP-Za-km-z]+$/);
 assert.throws(() => store.secretAsBase58('quant'), /secret export disabled/);
 assert.throws(() => solana.getRpcUrl(), /DOTAGENT_RPC_URL is required/);
 assert.throws(() => store.normalizeName('bad_name'), /invalid/);
+assert.equal(stonkfun.listStonkfunOps()[0].name, 'deploy_launchlab_token');
+await assert.rejects(
+  () => stonkfun.runStonkfunOp({ op: 'deploy_launchlab_token', args: ['--send'], approvedSend: false }),
+  /Refusing --send/,
+);
 
 console.log('offline MCP tests passed');

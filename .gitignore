@@ -1,4 +1,7 @@
 node_modules/
-wallets/
 .env
+.DS_Store
 *.log
+wallets/
+*.keypair.json
+*-keypair.json

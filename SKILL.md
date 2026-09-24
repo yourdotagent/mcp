@@ -1,10 +1,10 @@
 ---
 name: dotagent-passport
 description: Install this when an autonomous agent wants a .agent passport: clone the official MCP repo, create an agent-owned Solana wallet, sign identity proofs, upload/passport metadata, and later register a .agent passport/domain. This is agent-native; do not use browser wallet connect.
-version: 0.3.0
+version: 0.3.1
 author: .agent
 license: MIT
-platforms: [linux, macos]
+platforms: [linux, macos, windows]
 ---
 
 # .agent Passport Skill
@@ -13,6 +13,30 @@ platforms: [linux, macos]
 
 It is not a human wallet-connect app. The agent itself uses an MCP server to create and operate a Solana wallet so it can own a passport NFT and `name.agent` identity.
 
+## Prerequisites
+
+Core setup for Linux, macOS, Windows, and most agent frameworks:
+
+- Node.js 20+ LTS and npm 10+.
+- Git, with this repo cloned locally.
+- An agent runtime that can run MCP servers over stdio, or framework glue that can call MCP tools.
+- Local filesystem access for wallet JSON files.
+- Approved Solana RPC in `DOTAGENT_RPC_URL`; never use public/default RPCs.
+- Operator approval before any transaction, mint, register, send, relayer submit, Pump op, or other spend.
+
+Framework notes:
+
+- MCP-native agents: Hermes, Claude Desktop, Cursor, Windsurf, VS Code/Copilot-style MCP clients can point at `node .../src/server.js`.
+- Code agents: OpenAI/Responses, LangChain, CrewAI, AutoGen, Mastra, ElizaOS, custom Node/Python agents should call this MCP server through their MCP adapter/client rather than reimplementing wallet logic.
+- Non-MCP agents need a tiny adapter that sends JSON-RPC/MCP calls to this stdio server.
+
+Windows notes:
+
+- Use PowerShell or Windows Terminal.
+- Prefer a simple path like `C:\dotagent-mcp`.
+- Use `$env:DOTAGENT_RPC_URL="<approved Solana RPC>"` and `$env:DOTAGENT_WALLET_DIR="C:\dotagent-mcp\wallets"`.
+- File mode hardening is enforced on Unix; on Windows, protect the wallet directory with the user account/BitLocker permissions.
+
 ## Install
 
 Clone the official MCP repo:
@@ -20,6 +44,16 @@ Clone the official MCP repo:
 ```bash
 git clone https://github.com/yourdotagent/mcp.git ~/dotagent-mcp
 cd ~/dotagent-mcp
+npm install
+npm run check
+npm run start
+```
+
+Windows PowerShell:
+
+```powershell
+git clone https://github.com/yourdotagent/mcp.git C:\dotagent-mcp
+cd C:\dotagent-mcp
 npm install
 npm run check
 npm run start
@@ -81,6 +115,8 @@ If the correct devnet/testnet/mainnet RPC is not explicitly provided, stop and a
 - `dotagent_export_secret_base58` — disabled unless explicitly enabled for local backup only.
 - `dotagent_pump_ops_list` — list bundled Pump ops scripts.
 - `dotagent_pump_op` — run bundled Pump ops through MCP. Dry-run/simulation by default; `--send` requires exact approval and `approvedSend: true`.
+- `dotagent_stonkfun_ops_list` — list bundled StonkFun LaunchLab ops.
+- `dotagent_stonkfun_op` — plan/build/send a StonkFun-compatible Raydium LaunchLab deployment. Plan-only by default; `--send` requires exact approval and `approvedSend: true`.
 
 ## Passport workflow
 
@@ -153,7 +189,7 @@ dotagent_sign_nfp_proof({
 
 The on-chain record path verifies the Ed25519 signature against the passport owner and stores a proof PDA with the message, signature, NFT asset, domain record, nonce, and timestamp.
 
-## Pump ops ops
+## Pump ops
 
 This MCP bundles the working Pump scripts under `ops/pump/` so agents can operate Pump/Pump AMM flows from their MCP runtime. The scripts are copied into the repo; no secrets are included.
 
@@ -196,6 +232,49 @@ dotagent_pump_op({
 ```
 
 There is no dedicated sell script in the copied Pump folder yet; add a known-good sell script before exposing sell as an MCP op.
+
+## StonkFun LaunchLab ops
+
+This MCP also bundles a StonkFun deployment helper under `ops/stonkfun/deploy.cjs`.
+
+It follows the public StonkFun developer docs:
+
+- reads `GET /pairs?launchable=true&launchLabReady=true`
+- reads `GET /launchlab/pricing?quoteMint=<mint>`
+- uses `pricing.raise.raw` for `totalFundRaisingB`
+- uses StonkFun's published platform id and curve-rule account
+- supports standard launches by default and reward/taxed launches with `--tax-bps`
+- patches the quote token program slot to Token-2022 when the selected quote pair requires it
+
+Plan-only example, no signing or transaction:
+
+```text
+dotagent_stonkfun_op({
+  "op": "deploy_launchlab_token",
+  "args": ["--quote-mint", "<launchable quote mint>"]
+})
+```
+
+Build but do not broadcast:
+
+```text
+dotagent_stonkfun_op({
+  "op": "deploy_launchlab_token",
+  "args": [
+    "--quote-mint", "<launchable quote mint>",
+    "--name", "My Token",
+    "--symbol", "MYTKN",
+    "--uri", "https://example.com/metadata.json",
+    "--build"
+  ],
+  "env": {
+    "RPC_URL": "<approved Solana RPC>",
+    "PRIVATE_KEY": "<creator wallet secret, never paste in public chat>"
+  }
+})
+```
+
+Live `--send` is an irreversible on-chain LaunchLab deployment. It requires exact approval for network, quote mint, token metadata, tax mode, and expected spend, plus `approvedSend: true`.
 
 ## Safety
 
