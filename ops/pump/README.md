@@ -6,11 +6,11 @@ Load env from `ops/pump/.env`, the MCP repo `.env`, or explicit MCP tool env. No
 
 ## Scripts
 
-- `buy-bonding-curve.cjs` / `buybondingcurve.cjs` — direct Pump.fun bonding-curve buy.
-- `buy-migrated.cjs` / `buymigrated.cjs` — migrated-token Jupiter/Pump AMM buy path.
+- `buy-bonding-curve.cjs` — direct Pump.fun bonding-curve buy.
+- `buy-migrated.cjs` — migrated-token Jupiter/Pump AMM buy path.
 - `buy.cjs` — auto-detects bonding curve completion and dispatches to bonding/migrated buy.
-- `add-liquidity.cjs` / `addliq.cjs` — Pump AMM add liquidity.
-- `claim-fees.cjs` / `claimfees.cjs` — auto claim Pump v2, AMM, and redirect/share fees.
+- `add-liquidity.cjs` — Pump AMM add liquidity.
+- `claim-fees.cjs` — auto claim Pump v2, AMM, and redirect/share fees.
 - `claim-pump-v2-fees.cjs` — claim only Pump v2 creator fees.
 - `claim-amm-fees.cjs` — claim only Pump AMM creator fees.
 - `claim-redirect-fees.cjs` — claim only redirect/sharing fees.
