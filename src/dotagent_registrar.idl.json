@@ -140,7 +140,8 @@
           "signer": true
         },
         {
-          "name": "collection"
+          "name": "collection",
+          "writable": true
         },
         {
           "name": "domain_record",
