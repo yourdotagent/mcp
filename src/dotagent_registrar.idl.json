@@ -76,6 +76,114 @@
       ]
     },
     {
+      "name": "record_nfp_signature",
+      "discriminator": [
+        129,
+        9,
+        73,
+        157,
+        186,
+        23,
+        154,
+        51
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "domain_record",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  111,
+                  109,
+                  97,
+                  105,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "relations": [
+            "domain_record"
+          ]
+        },
+        {
+          "name": "agent_wallet"
+        },
+        {
+          "name": "proof_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  111,
+                  102
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "domain_record"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "instructions",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "signature",
+          "type": {
+            "array": [
+              "u8",
+              64
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "register_agent",
       "discriminator": [
         135,
@@ -344,6 +452,19 @@
       ]
     },
     {
+      "name": "NfpProofRecord",
+      "discriminator": [
+        161,
+        0,
+        183,
+        49,
+        182,
+        195,
+        9,
+        171
+      ]
+    },
+    {
       "name": "RegistryConfig",
       "discriminator": [
         23,
@@ -395,6 +516,19 @@
         100,
         189,
         85
+      ]
+    },
+    {
+      "name": "NfpSignatureRecorded",
+      "discriminator": [
+        158,
+        174,
+        115,
+        143,
+        54,
+        233,
+        148,
+        111
       ]
     }
   ],
@@ -453,6 +587,16 @@
       "code": 6010,
       "name": "InvalidCollection",
       "msg": "Invalid collection account"
+    },
+    {
+      "code": 6011,
+      "name": "MissingSignatureProof",
+      "msg": "Missing ed25519 signature proof instruction"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidSignatureProof",
+      "msg": "Invalid ed25519 signature proof instruction"
     }
   ],
   "types": [
@@ -664,6 +808,87 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NfpProofRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "domain_record",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "nft_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "message",
+            "type": "string"
+          },
+          {
+            "name": "signature",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NfpSignatureRecorded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "domain_record",
+            "type": "pubkey"
+          },
+          {
+            "name": "nft_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "proof_record",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
           }
         ]
       }

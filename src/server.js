@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { createWallet, listWallets, exportPublicKey, secretAsBase58 } from './wallet-store.js';
-import { getBalance, signMessage, sendSol, registerPassport } from './solana-tools.js';
+import { getBalance, signMessage, sendSol, registerPassport, signNfpProof, recordNfpProof } from './solana-tools.js';
 
 const server = new McpServer({
   name: 'dotagent-passport',
@@ -50,6 +50,34 @@ server.tool(
   'Sign an identity proof message with the agent wallet.',
   { walletId: z.string(), message: z.string() },
   async (args) => text(signMessage(args)),
+);
+
+
+server.tool(
+  'dotagent_sign_nfp_proof',
+  'Gaslessly sign a Non-Fungible Passport ownership proof. Does not send a transaction.',
+  {
+    walletId: z.string(),
+    name: z.string().describe('.agent name, e.g. quant.agent'),
+    nonce: z.union([z.string(), z.number()]).optional(),
+    statement: z.string().optional(),
+  },
+  async (args) => text(signNfpProof(args)),
+);
+
+server.tool(
+  'dotagent_record_nfp_proof',
+  'Record a gasless NFP signature proof on-chain via relayer. Fund-moving for relayer gas/rent: requires exact approval.',
+  {
+    relayerWalletId: z.string(),
+    name: z.string(),
+    nonce: z.union([z.string(), z.number()]),
+    message: z.string(),
+    signatureBase58: z.string(),
+    signerPublicKey: z.string(),
+    programId: z.string().optional(),
+  },
+  async (args) => text(await recordNfpProof(args)),
 );
 
 server.tool(

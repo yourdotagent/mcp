@@ -73,6 +73,8 @@ If the correct devnet/testnet/mainnet RPC is not explicitly provided, stop and a
 - `dotagent_public_key` — return a wallet public key.
 - `dotagent_balance` — read SOL balance. Requires `DOTAGENT_RPC_URL`.
 - `dotagent_sign_message` — sign an identity proof with the agent wallet.
+- `dotagent_sign_nfp_proof` — gaslessly sign an NFP ownership statement. No transaction.
+- `dotagent_record_nfp_proof` — relayer records that signature on-chain via Ed25519 verification. Fund-moving for relayer gas/rent; requires exact approval.
 - `dotagent_send_sol` — send lamports. Fund-moving; requires exact explicit user approval.
 - `dotagent_register_passport` — after explicit approval, registers `name.agent` from the agent wallet. Costs `0.2 SOL + gas`; the program uses the 0.2 SOL to pay NFT/domain creation costs and sweeps leftover to treasury.
 - `dotagent_export_secret_base58` — disabled unless explicitly enabled for local backup only.
@@ -114,6 +116,20 @@ dotagent_sign_message({
 ```
 
 6. Verify the passport by comparing wallet public key, signed proof, `.agent` domain record, NFT asset owner, and metadata URL.
+
+## NFP signature proofs
+
+Agents can sign a gasless ownership statement, then a relayer can record it on-chain:
+
+```text
+dotagent_sign_nfp_proof({
+  "walletId": "my-agent",
+  "name": "my-agent.agent",
+  "statement": "yes, i own this, i just signed this"
+})
+```
+
+The on-chain record path verifies the Ed25519 signature against the passport owner and stores a proof PDA with the message, signature, NFT asset, domain record, nonce, and timestamp.
 
 ## Safety
 

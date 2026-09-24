@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import * as anchor from '@coral-xyz/anchor';
 import {
   Connection,
+  Ed25519Program,
   Keypair,
   PublicKey,
   SystemProgram,
@@ -162,5 +163,77 @@ export async function registerPassport({ walletId, name, metadataUri, profile = 
     metadataUri: account.metadataUri,
     registrationFeeLamports: REGISTRATION_FEE_LAMPORTS,
     assetKeypairPath: asset.path,
+  };
+}
+
+
+export function buildNfpMessage({ name, owner, nonce, statement }) {
+  const normalized = normalizeName(name);
+  const wallet = owner || '';
+  const text = statement || 'yes, i own this .agent passport';
+  return `.agent NFP proof\nname=${normalized}.agent\nowner=${wallet}\nnonce=${nonce}\nstatement=${text}`;
+}
+
+export function signNfpProof({ walletId, name, nonce = Date.now().toString(), statement }) {
+  const kp = loadWallet(walletId);
+  const message = buildNfpMessage({ name, owner: kp.publicKey.toBase58(), nonce, statement });
+  const signature = nacl.sign.detached(new TextEncoder().encode(message), kp.secretKey);
+  return {
+    walletId,
+    name: `${normalizeName(name)}.agent`,
+    owner: kp.publicKey.toBase58(),
+    nonce: String(nonce),
+    message,
+    signatureBase58: bs58.encode(signature),
+  };
+}
+
+export async function recordNfpProof({ relayerWalletId, name, nonce, message, signatureBase58, signerPublicKey, programId }) {
+  const normalized = normalizeName(name);
+  const relayer = loadWallet(relayerWalletId);
+  const connection = getConnection();
+  const idl = loadIdl();
+  const resolvedProgramId = new PublicKey(programId || process.env.DOTAGENT_PROGRAM_ID || idl.address || DEFAULT_PROGRAM_ID);
+  const provider = new anchor.AnchorProvider(connection, new anchor.Wallet(relayer), { commitment: 'confirmed' });
+  const program = new anchor.Program({ ...idl, address: resolvedProgramId.toBase58() }, provider);
+  const owner = new PublicKey(signerPublicKey);
+  const signature = bs58.decode(signatureBase58);
+  if (signature.length !== 64) throw new Error('signature must be 64 bytes');
+  const messageBytes = Buffer.from(message, 'utf8');
+  const [domainRecord] = PublicKey.findProgramAddressSync([Buffer.from('domain'), Buffer.from(normalized)], resolvedProgramId);
+  const [proofRecord] = PublicKey.findProgramAddressSync([
+    Buffer.from('proof'),
+    domainRecord.toBuffer(),
+    new anchor.BN(String(nonce)).toArrayLike(Buffer, 'le', 8),
+  ], resolvedProgramId);
+
+  const ed25519Ix = Ed25519Program.createInstructionWithPublicKey({
+    publicKey: owner.toBytes(),
+    message: messageBytes,
+    signature,
+  });
+  const ix = await program.methods
+    .recordNfpSignature(normalized, new anchor.BN(String(nonce)), message, Array.from(signature))
+    .accounts({
+      payer: relayer.publicKey,
+      domainRecord,
+      owner,
+      agentWallet: owner,
+      proofRecord,
+      instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+      systemProgram: SystemProgram.programId,
+    })
+    .instruction();
+  const tx = new Transaction().add(ed25519Ix, ix);
+  const txSignature = await sendAndConfirmTransaction(connection, tx, [relayer], { commitment: 'confirmed' });
+  return {
+    signature: txSignature,
+    name: `${normalized}.agent`,
+    owner: owner.toBase58(),
+    domainRecord: domainRecord.toBase58(),
+    proofRecord: proofRecord.toBase58(),
+    nonce: String(nonce),
+    message,
+    signerSignatureBase58: signatureBase58,
   };
 }
