@@ -55,7 +55,7 @@ export async function sendSol({ walletId, to, lamports }) {
 
 
 const REGISTRATION_FEE_LAMPORTS = 200_000_000;
-const DEFAULT_PROGRAM_ID = 'BkLcdVU44Vwx8z6hL969aD8mXvwsMzcjRbncmJHcHD3w';
+const DEFAULT_PROGRAM_ID = '69y12nkHQFaWUxtnrQ5kMccS5ZBZFJq9RQWqAsWaZJAM';
 const MPL_CORE_PROGRAM_ID = 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d';
 const SYSTEM_PROGRAM_ID = '11111111111111111111111111111111';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
