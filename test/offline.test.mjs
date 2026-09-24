@@ -20,6 +20,12 @@ const proof = solana.signMessage({ walletId: 'quant', message: '.agent passport 
 assert.equal(proof.publicKey, wallet.publicKey);
 assert.match(proof.signatureBase58, /^[1-9A-HJ-NP-Za-km-z]+$/);
 
+const ownership = await solana.proveOwnership({ walletId: 'quant', name: 'quant.agent', challenge: 'site-nonce-123' });
+assert.equal(ownership.owner, wallet.publicKey);
+assert.equal(ownership.message, 'site-nonce-123');
+assert.equal(ownership.submitted, false);
+assert.match(ownership.signatureBase58, /^[1-9A-HJ-NP-Za-km-z]+$/);
+
 assert.throws(() => store.secretAsBase58('quant'), /secret export disabled/);
 assert.throws(() => solana.getRpcUrl(), /DOTAGENT_RPC_URL is required/);
 assert.throws(() => store.normalizeName('bad_name'), /invalid/);

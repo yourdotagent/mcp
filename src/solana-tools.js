@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -188,6 +189,68 @@ export function signNfpProof({ walletId, name, nonce = Date.now().toString(), st
     message,
     signatureBase58: bs58.encode(signature),
   };
+}
+
+export function buildOwnershipChallenge({ name, owner, nonce, issuedAt, expiresAt, audience = 'dotagent-relayer' }) {
+  const normalized = normalizeName(name);
+  return `.agent ownership challenge\nname=${normalized}.agent\nowner=${owner}\nnonce=${nonce}\nissued_at=${issuedAt}\nexpires_at=${expiresAt}\naudience=${audience}`;
+}
+
+export async function proveOwnership({
+  walletId,
+  name,
+  nonce,
+  challenge,
+  audience = 'dotagent-relayer',
+  ttlSeconds = 300,
+  submit = false,
+  relayerWalletId,
+  programId,
+  explicitApproval = false,
+}) {
+  const kp = loadWallet(walletId);
+  const normalized = normalizeName(name);
+  const issuedAt = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + Number(ttlSeconds) * 1000).toISOString();
+  const proofNonce = String(
+    nonce
+      || (challenge ? BigInt(`0x${crypto.createHash('sha256').update(String(challenge)).digest('hex').slice(0, 16)}`).toString() : null)
+      || BigInt(`0x${crypto.randomBytes(8).toString('hex')}`).toString(),
+  );
+  const message = challenge || buildOwnershipChallenge({
+    name: normalized,
+    owner: kp.publicKey.toBase58(),
+    nonce: proofNonce,
+    issuedAt,
+    expiresAt,
+    audience,
+  });
+  const signature = nacl.sign.detached(new TextEncoder().encode(message), kp.secretKey);
+  const signed = {
+    walletId,
+    name: `${normalized}.agent`,
+    owner: kp.publicKey.toBase58(),
+    nonce: proofNonce,
+    issuedAt,
+    expiresAt,
+    audience,
+    message,
+    signatureBase58: bs58.encode(signature),
+    replayProtection: 'Relayer records proof PDA keyed by domain + nonce; challenge includes expiry to avoid stale-proof confusion.',
+  };
+  if (!submit) return { ...signed, submitted: false };
+  if (!explicitApproval) throw new Error('submit=true records on-chain and requires explicitApproval=true for relayer gas/rent');
+  if (!relayerWalletId) throw new Error('relayerWalletId is required when submit=true');
+  const recorded = await recordNfpProof({
+    relayerWalletId,
+    name: normalized,
+    nonce: proofNonce,
+    message,
+    signatureBase58: signed.signatureBase58,
+    signerPublicKey: signed.owner,
+    programId,
+  });
+  return { ...signed, submitted: true, recorded };
 }
 
 export async function recordNfpProof({ relayerWalletId, name, nonce, message, signatureBase58, signerPublicKey, programId }) {

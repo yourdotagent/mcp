@@ -74,10 +74,13 @@ If the correct devnet/testnet/mainnet RPC is not explicitly provided, stop and a
 - `dotagent_balance` — read SOL balance. Requires `DOTAGENT_RPC_URL`.
 - `dotagent_sign_message` — sign an identity proof with the agent wallet.
 - `dotagent_sign_nfp_proof` — gaslessly sign an NFP ownership statement. No transaction.
+- `dotagent_prove_ownership` — one-command proof: generate/sign a site nonce challenge gaslessly and optionally submit through a relayer after exact approval.
 - `dotagent_record_nfp_proof` — relayer records that signature on-chain via Ed25519 verification. Fund-moving for relayer gas/rent; requires exact approval.
 - `dotagent_send_sol` — send lamports. Fund-moving; requires exact explicit user approval.
 - `dotagent_register_passport` — after explicit approval, registers `name.agent` from the agent wallet. Costs `0.2 SOL + gas`; the program uses the 0.2 SOL to pay NFT/domain creation costs and sweeps leftover to treasury.
 - `dotagent_export_secret_base58` — disabled unless explicitly enabled for local backup only.
+- `dotagent_pump_ops_list` — list bundled Pump ops scripts.
+- `dotagent_pump_op` — run bundled Pump ops through MCP. Dry-run/simulation by default; `--send` requires exact approval and `approvedSend: true`.
 
 ## Passport workflow
 
@@ -117,9 +120,28 @@ dotagent_sign_message({
 
 6. Verify the passport by comparing wallet public key, signed proof, `.agent` domain record, NFT asset owner, and metadata URL.
 
+## Challenge flow
+
+1. Site generates a nonce/challenge.
+2. Agent signs it gaslessly.
+3. Relayer records proof.
+4. Nonce PDA prevents replay; expiry/audience in the signed challenge prevents stale-proof confusion.
+
+## MCP one-command proof
+
+Use `dotagent_prove_ownership` for agent-friendly proof flow. It signs locally by default and can optionally ask a user/relayer to submit the proof on-chain.
+
+```text
+dotagent_prove_ownership({
+  "walletId": "my-agent",
+  "name": "my-agent.agent",
+  "challenge": "<site nonce/challenge>"
+})
+```
+
 ## NFP signature proofs
 
-Agents can sign a gasless ownership statement, then a relayer can record it on-chain:
+Agents can also sign a gasless ownership statement, then a relayer can record it on-chain:
 
 ```text
 dotagent_sign_nfp_proof({
@@ -130,6 +152,50 @@ dotagent_sign_nfp_proof({
 ```
 
 The on-chain record path verifies the Ed25519 signature against the passport owner and stores a proof PDA with the message, signature, NFT asset, domain record, nonce, and timestamp.
+
+## Pump ops ops
+
+This MCP bundles the working Pump scripts under `ops/pump/` so agents can operate Pump/Pump AMM flows from their MCP runtime. The scripts are copied into the repo; no secrets are included.
+
+Available ops:
+
+- `buy` — auto-detect bonding vs migrated path.
+- `buy_bonding_curve` — direct Pump bonding-curve buy.
+- `buy_migrated` — migrated token buy path.
+- `add_liquidity` — Pump AMM liquidity add.
+- `claim_fees`, `claim_pump_v2_fees`, `claim_amm_fees`, `claim_redirect_fees` — fee claims.
+- `deploy_pump_token` — Pump token deploy helper.
+- `airdrop` — holder airdrop helper.
+- `burn_tokens` — burn signer token balance or amount.
+
+Use `dotagent_pump_ops_list` to inspect available ops.
+
+Example dry-run/simulation:
+
+```text
+dotagent_pump_op({
+  "op": "buy",
+  "args": ["--mint", "<mint>", "--amount-sol", "0.01"],
+  "env": {
+    "RPC_URL": "<approved Solana RPC>",
+    "PRIVATE_KEY": "<agent wallet secret, never paste in public chat>",
+    "PROJECT_TOKEN_MINT": "<mint>"
+  }
+})
+```
+
+Live execution requires exact approval for the action/network/spend and must pass `--send` plus `approvedSend: true`:
+
+```text
+dotagent_pump_op({
+  "op": "add_liquidity",
+  "args": ["--send"],
+  "approvedSend": true,
+  "env": { "RPC_URL": "<approved RPC>", "PRIVATE_KEY": "<secret>", "PROJECT_TOKEN_MINT": "<mint>" }
+})
+```
+
+There is no dedicated sell script in the copied Pump folder yet; add a known-good sell script before exposing sell as an MCP op.
 
 ## Safety
 

@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { createWallet, listWallets, exportPublicKey, secretAsBase58 } from './wallet-store.js';
-import { getBalance, signMessage, sendSol, registerPassport, signNfpProof, recordNfpProof } from './solana-tools.js';
+import { getBalance, signMessage, sendSol, registerPassport, signNfpProof, recordNfpProof, proveOwnership } from './solana-tools.js';
 
 const server = new McpServer({
   name: 'dotagent-passport',
@@ -65,6 +65,25 @@ server.tool(
   async (args) => text(signNfpProof(args)),
 );
 
+
+server.tool(
+  'dotagent_prove_ownership',
+  'One-command .agent ownership proof: generates/signs a nonce challenge gaslessly and can optionally submit through a relayer after exact approval.',
+  {
+    walletId: z.string(),
+    name: z.string().describe('.agent name, e.g. quant.agent'),
+    nonce: z.union([z.string(), z.number()]).optional(),
+    challenge: z.string().optional().describe('Optional site-provided challenge. If omitted, MCP creates one.'),
+    audience: z.string().optional().describe('Site/relayer audience label.'),
+    ttlSeconds: z.number().int().positive().max(3600).optional(),
+    submit: z.boolean().optional().describe('Default false. true records on-chain through a relayer.'),
+    relayerWalletId: z.string().optional(),
+    programId: z.string().optional(),
+    explicitApproval: z.boolean().optional().describe('Must be true when submit=true because relayer pays gas/rent.'),
+  },
+  async (args) => text(await proveOwnership(args)),
+);
+
 server.tool(
   'dotagent_record_nfp_proof',
   'Record a gasless NFP signature proof on-chain via relayer. Fund-moving for relayer gas/rent: requires exact approval.',
@@ -78,6 +97,27 @@ server.tool(
     programId: z.string().optional(),
   },
   async (args) => text(await recordNfpProof(args)),
+);
+
+
+server.tool(
+  'dotagent_pump_ops_list',
+  'List bundled Pump operation scripts available through this MCP.',
+  {},
+  async () => text({ ops: listPumpOps() }),
+);
+
+server.tool(
+  'dotagent_pump_op',
+  'Run a bundled Pump op script. Defaults are dry-run/simulation. Passing --send is fund-moving and requires exact human approval plus approvedSend=true.',
+  {
+    op: z.enum(['buy', 'buy_bonding_curve', 'buy_migrated', 'add_liquidity', 'claim_fees', 'claim_pump_v2_fees', 'claim_amm_fees', 'claim_redirect_fees', 'deploy_pump_token', 'airdrop', 'burn_tokens']),
+    args: z.array(z.string()).optional().describe('CLI args for the script, e.g. ["--mint", "...", "--amount-sol", "0.01"]. Include --send only after exact approval.'),
+    env: z.record(z.string()).optional().describe('Runtime env such as RPC_URL, PRIVATE_KEY, PROJECT_TOKEN_MINT. Do not expose secrets in chat.'),
+    approvedSend: z.boolean().optional().describe('Must be true when args includes --send, after exact human approval.'),
+    timeoutMs: z.number().int().positive().optional(),
+  },
+  async (args) => text(await runPumpOp(args)),
 );
 
 server.tool(

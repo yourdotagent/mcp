@@ -1,0 +1,1 @@
+{"name":"pump-ops-scripts","private":true,"type":"commonjs","scripts":{"check":"for f in *.cjs lib/*.cjs; do node --check \"$f\" || exit 1; done"}}
