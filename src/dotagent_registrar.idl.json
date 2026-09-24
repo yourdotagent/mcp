@@ -1,0 +1,724 @@
+{
+  "address": "BkLcdVU44Vwx8z6hL969aD8mXvwsMzcjRbncmJHcHD3w",
+  "metadata": {
+    "name": "dotagent_registrar",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": ".agent registrar program"
+  },
+  "instructions": [
+    {
+      "name": "initialize_registry",
+      "discriminator": [
+        189,
+        181,
+        20,
+        17,
+        174,
+        57,
+        249,
+        59
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury"
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "base_uri",
+          "type": "string"
+        },
+        {
+          "name": "collection",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "register_agent",
+      "discriminator": [
+        135,
+        157,
+        66,
+        195,
+        2,
+        113,
+        175,
+        30
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true
+        },
+        {
+          "name": "fee_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  101,
+                  101,
+                  45,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "mpl_core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "agent_nft_asset",
+          "docs": [
+            "The new Metaplex Core NFT asset. Client creates/signs this keypair."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "collection"
+        },
+        {
+          "name": "domain_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  111,
+                  109,
+                  97,
+                  105,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "metadata_uri",
+          "type": "string"
+        },
+        {
+          "name": "profile",
+          "type": {
+            "defined": {
+              "name": "AgentProfileInput"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "set_registry_config",
+      "discriminator": [
+        180,
+        70,
+        57,
+        159,
+        140,
+        145,
+        111,
+        225
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "registry"
+          ]
+        },
+        {
+          "name": "registry",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "treasury",
+          "type": {
+            "option": "pubkey"
+          }
+        },
+        {
+          "name": "base_uri",
+          "type": {
+            "option": "string"
+          }
+        },
+        {
+          "name": "paused",
+          "type": {
+            "option": "bool"
+          }
+        },
+        {
+          "name": "transferable",
+          "type": {
+            "option": "bool"
+          }
+        },
+        {
+          "name": "collection",
+          "type": {
+            "option": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "transfer_agent_record",
+      "discriminator": [
+        191,
+        239,
+        62,
+        106,
+        175,
+        60,
+        113,
+        243
+      ],
+      "accounts": [
+        {
+          "name": "current_owner",
+          "signer": true
+        },
+        {
+          "name": "registry"
+        },
+        {
+          "name": "domain_record",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "relations": [
+            "domain_record"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "_new_owner",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_agent_profile",
+      "discriminator": [
+        115,
+        30,
+        177,
+        145,
+        243,
+        220,
+        156,
+        48
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "domain_record"
+          ]
+        },
+        {
+          "name": "domain_record",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "metadata_uri",
+          "type": {
+            "option": "string"
+          }
+        },
+        {
+          "name": "profile",
+          "type": {
+            "defined": {
+              "name": "AgentProfileInput"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DomainRecord",
+      "discriminator": [
+        130,
+        61,
+        36,
+        125,
+        56,
+        48,
+        189,
+        247
+      ]
+    },
+    {
+      "name": "RegistryConfig",
+      "discriminator": [
+        23,
+        118,
+        10,
+        246,
+        173,
+        231,
+        243,
+        156
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "AgentProfileUpdated",
+      "discriminator": [
+        37,
+        86,
+        36,
+        71,
+        59,
+        237,
+        6,
+        247
+      ]
+    },
+    {
+      "name": "AgentRecordTransferred",
+      "discriminator": [
+        146,
+        109,
+        47,
+        7,
+        160,
+        152,
+        92,
+        204
+      ]
+    },
+    {
+      "name": "AgentRegistered",
+      "discriminator": [
+        191,
+        78,
+        217,
+        54,
+        232,
+        100,
+        189,
+        85
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "RegistryPaused",
+      "msg": "Registry is paused"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidName",
+      "msg": "Invalid .agent name"
+    },
+    {
+      "code": 6002,
+      "name": "NameTooLong",
+      "msg": "Name is too long"
+    },
+    {
+      "code": 6003,
+      "name": "FieldTooLong",
+      "msg": "Field is too long"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidProfileField",
+      "msg": "Invalid profile field"
+    },
+    {
+      "code": 6005,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
+    },
+    {
+      "code": 6006,
+      "name": "TransfersDisabled",
+      "msg": "Transfers disabled"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidOwner",
+      "msg": "Invalid owner"
+    },
+    {
+      "code": 6008,
+      "name": "NameMustBeNormalized",
+      "msg": "Name must be lowercase normalized before registration"
+    },
+    {
+      "code": 6009,
+      "name": "TransfersPermanentlyDisabled",
+      "msg": "Transfers are permanently disabled"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidCollection",
+      "msg": "Invalid collection account"
+    }
+  ],
+  "types": [
+    {
+      "name": "AgentProfileInput",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "twitter",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "website",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "public_solana_wallet",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "display_name",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "bio",
+            "type": {
+              "option": "string"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentProfileUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "domain_record",
+            "type": "pubkey"
+          },
+          {
+            "name": "nft_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "collection",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentRecordTransferred",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "old_owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "domain_record",
+            "type": "pubkey"
+          },
+          {
+            "name": "nft_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "collection",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AgentRegistered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "domain_record",
+            "type": "pubkey"
+          },
+          {
+            "name": "nft_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "collection",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "full_name",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DomainRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "registry",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "nft_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "collection",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "tld",
+            "type": "string"
+          },
+          {
+            "name": "metadata_uri",
+            "type": "string"
+          },
+          {
+            "name": "twitter",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "website",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "public_solana_wallet",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "display_name",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "bio",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "non_transferable",
+            "type": "bool"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "updated_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RegistryConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "collection",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "base_uri",
+            "type": "string"
+          },
+          {
+            "name": "transferable",
+            "type": "bool"
+          },
+          {
+            "name": "paused",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                256
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

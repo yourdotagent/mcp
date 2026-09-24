@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { createWallet, listWallets, exportPublicKey, secretAsBase58 } from './wallet-store.js';
-import { getBalance, signMessage, sendSol } from './solana-tools.js';
+import { getBalance, signMessage, sendSol, registerPassport } from './solana-tools.js';
 
 const server = new McpServer({
   name: 'dotagent-passport',
@@ -26,7 +26,7 @@ server.tool(
 
 server.tool(
   'dotagent_list_wallets',
-  'List local dotagent wallets without secrets.',
+  'List local .agent wallets without secrets.',
   {},
   async () => text({ wallets: listWallets() }),
 );
@@ -57,6 +57,26 @@ server.tool(
   'Send lamports from an agent wallet. Fund-moving: caller must explicitly request exact recipient and lamports.',
   { walletId: z.string(), to: z.string(), lamports: z.number().int().positive() },
   async (args) => text(await sendSol(args)),
+);
+
+
+server.tool(
+  'dotagent_register_passport',
+  'Register a .agent passport/domain. Fund-moving: requires exact approval for network, name, and 0.2 SOL registration fee plus gas.',
+  {
+    walletId: z.string(),
+    name: z.string().describe('Name without or with .agent suffix, e.g. quant or quant.agent'),
+    metadataUri: z.string().optional(),
+    programId: z.string().optional(),
+    profile: z.object({
+      twitter: z.string().nullable().optional(),
+      website: z.string().nullable().optional(),
+      publicSolanaWallet: z.string().nullable().optional(),
+      displayName: z.string().nullable().optional(),
+      bio: z.string().nullable().optional(),
+    }).optional(),
+  },
+  async (args) => text(await registerPassport(args)),
 );
 
 server.tool(

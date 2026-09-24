@@ -34,7 +34,7 @@ function walletPath(id) {
   return path.join(ensureWalletDir(), `${safeId(id)}.json`);
 }
 
-export function createWallet({ id, agentName, purpose = 'dotagent passport wallet' } = {}) {
+export function createWallet({ id, agentName, purpose = '.agent passport wallet' } = {}) {
   const name = agentName ? normalizeName(agentName) : undefined;
   const walletId = safeId(id || name || `agent-${crypto.randomUUID()}`);
   const file = walletPath(walletId);

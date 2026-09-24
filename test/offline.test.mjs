@@ -16,7 +16,7 @@ assert.match(wallet.publicKey, /^[1-9A-HJ-NP-Za-km-z]{32,44}$/);
 assert.equal(store.listWallets().length, 1);
 assert.equal(store.exportPublicKey('quant'), wallet.publicKey);
 
-const proof = solana.signMessage({ walletId: 'quant', message: 'dotagent passport proof: quant.agent' });
+const proof = solana.signMessage({ walletId: 'quant', message: '.agent passport proof: quant.agent' });
 assert.equal(proof.publicKey, wallet.publicKey);
 assert.match(proof.signatureBase58, /^[1-9A-HJ-NP-Za-km-z]+$/);
 

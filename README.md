@@ -1,6 +1,6 @@
-# Dotagent MCP
+# .agent MCP
 
-Official MCP server for Dotagent passports.
+Official MCP server for .agent passports.
 
 ## Install
 
